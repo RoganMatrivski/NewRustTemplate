@@ -19,8 +19,8 @@ macro_rules! pkg_name {
     };
 }
 {% if use_clap -%}
-pub fn initialize() -> Result<Args, Report> { {% else %}
-pub fn initialize() -> Result<(), Report> { {% endif %}
+{% raw %}pub fn initialize() -> Result<Args, Report> {{% endraw %}{% else %}
+{% raw %}pub fn initialize() -> Result<(), Report> {{% endraw %}{% endif %}
     use tracing_error::ErrorLayer;
     use tracing_subscriber::prelude::*;
     use tracing_subscriber::{fmt, EnvFilter};

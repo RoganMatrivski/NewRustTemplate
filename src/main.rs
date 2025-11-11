@@ -6,9 +6,9 @@ mod init;
 
 #[tracing::instrument]
 fn main() -> Result<(), Report> {
-    {%- if use_init %}
+{%- if use_init %}
     init::initialize()?;
-    {% endif %}
+{% endif %}
     println!("Hello, world!");
 
     Ok(())
