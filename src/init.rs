@@ -1,9 +1,8 @@
-{%- if use_clap -%}
+{% if use_clap -%}
 use clap::Parser;
 {% endif -%}
 use color_eyre::Report;
-
-{% if use_clap -%}
+{% if use_clap %}
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
 pub struct Args {
@@ -12,74 +11,56 @@ pub struct Args {
     pub verbose: u8,
 }
 
-const VERBOSE_LEVEL: &[&str] = &["info", "debug", "trace"];{%- endif %}
-
-macro_rules! get_this_pkg_name {
+const VERBOSE_LEVELS: &[&str] = &["info", "debug", "trace"];
+{% endif %}
+macro_rules! pkg_name {
     () => {
         env!("CARGO_PKG_NAME").replace('-', "_")
     };
 }
-
 {% if use_clap -%}
-pub fn initialize() -> Result<Args, Report> {
-{% else -%}
-pub fn initialize() -> Result<(), Report> {
-{%- endif %}
+pub fn initialize() -> Result<Args, Report> { {% else %}
+pub fn initialize() -> Result<(), Report> { {% endif %}
     use tracing_error::ErrorLayer;
     use tracing_subscriber::prelude::*;
     use tracing_subscriber::{fmt, EnvFilter};
 
     color_eyre::install()?;
-
-{%- if use_clap %}
+{% if use_clap %}
     let args = Args::parse();
 
-    let verbosity = match args.verbose {
-        1..=3 => Some(VERBOSE_LEVEL[(args.verbose as usize) - 1]),
-        _ => None,
-    };
-{%- else %}
-    let verbosity = Some("warn");
-{%- endif %}
-
-    let env_filter = EnvFilter::from_default_env()
-        .add_directive(tracing::level_filters::LevelFilter::WARN.into());
-    let env_filter = match verbosity {
-        Some(v) => env_filter.add_directive(
-            format!("{}={}", get_this_pkg_name!(), v)
-                .parse()
-                .expect("Failed to parse log parameter"),
-        ),
-        None => env_filter,
-    };
-
-    let fmt_layer = fmt::layer().with_writer(std::io::stderr);
-
-    let fmt_layer = match verbosity {
-        Some(_) => {
-            // construct a layer that prints formatted traces to stderr
-            fmt_layer
-                .with_level(true) // include levels in formatted output
-                .with_thread_ids(true) // include the thread ID of the current thread
-                .with_thread_names(true) // include the name of the current thread
-        }
-        None => {
-            // construct a layer that prints formatted traces to stderr
-            fmt_layer
-        }
-    };
-
+    let crate_level = args
+        .verbose
+        .min(VERBOSE_LEVELS.len() as u8)
+        .checked_sub(1)
+        .map(|i| VERBOSE_LEVELS[i as usize])
+        .unwrap_or("warn");
+{% else %}
+    let crate_level = "warn";
+{% endif %}
+    // Try to build from RUST_LOG, or fall back to a base "warn"
+    let env_filter = EnvFilter::try_from_default_env()
+        .unwrap_or_else(|_| EnvFilter::new("warn"))
+        .add_directive(format!("{}={}", pkg_name!(), crate_level).parse().unwrap());
+{% if use_clap %}
+    let fmt_layer = fmt::layer()
+        .with_writer(std::io::stderr)
+        .with_level(true)
+        .with_thread_ids(args.verbose > 1)
+        .with_thread_names(args.verbose > 2);
+{% else %}
+    let fmt_layer = fmt::layer()
+        .with_writer(std::io::stderr)
+        .with_level(true);
+{% endif %}
     tracing_subscriber::registry()
         .with(fmt_layer)
         .with(env_filter)
         .with(ErrorLayer::default())
         .init();
-
-{%- if use_clap %}
-
+{% if use_clap %}
     Ok(args)
-{%- else %}
-
+{% else %}
     Ok(())
-{%- endif %}
+{% endif -%}
 }
