@@ -8,8 +8,7 @@ mod init;
 fn main() -> Result<(), Report> {
     {%- if use_init %}
     init::initialize()?;
-
-    {% endif -%}
+    {% endif %}
     println!("Hello, world!");
 
     Ok(())
