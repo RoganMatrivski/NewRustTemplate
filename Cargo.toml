@@ -10,6 +10,10 @@ edition = "2021"
 {%- if use_clap %}
 clap = { version = "^4.5", features = ["derive"] }
 {%- endif %}
+{%- if use_mimalloc%}
+[target.'cfg(target_env = "musl")'.dependencies]
+mimalloc = "^0.1.48"
+{% endif %}
 color-eyre = { version = "0.6.3", features = ["capture-spantrace"] }
 tracing = "0.1.41"
 tracing-error = "0.2.1"

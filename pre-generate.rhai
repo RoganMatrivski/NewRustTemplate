@@ -3,6 +3,9 @@
 let crate_type = variable::get("crate_type");
 // debug(`crate_type: ${crate_type}`);
 
+// Enable `mimalloc` by default
+variable::set("use_mimalloc", true);
+
 let license = variable::get("license").to_upper();
 while (
     switch license {
