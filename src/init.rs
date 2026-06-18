@@ -29,18 +29,19 @@ macro_rules! pkg_name {
 {% if use_clap %}
     let args = Args::parse();
 
-    let crate_level = if args.verbose == 0 {
-        "warn"
-    } else {
-        VERBOSE_LEVELS[std::cmp::min(args.verbose as usize - 1, VERBOSE_LEVELS.len() - 1)]
-    };
+    let crate_level = args
+        .verbose
+        .min(VERBOSE_LEVELS.len() as u8)
+        .checked_sub(1)
+        .map(|i| VERBOSE_LEVELS[i as usize])
+        .unwrap_or("warn");
 {% else %}
     let crate_level = "warn";
 {% endif %}
     // Try to build from RUST_LOG, or fall back to a base "warn"
     let env_filter = EnvFilter::try_from_default_env()
         .unwrap_or_else(|_| EnvFilter::new("warn"))
-        .add_directive(format!("{}={}", pkg_name!(), crate_level).parse().map_err(|e| eyre::eyre!(e))?);
+        .add_directive(format!("{}={}", pkg_name!(), crate_level).parse().unwrap());
 {% if use_clap %}
     let fmt_layer = fmt::layer()
         .with_writer(std::io::stderr)
