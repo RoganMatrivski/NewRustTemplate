@@ -1,4 +1,4 @@
-{% if use_clap -%}
+{%- if use_clap -%}
 use clap::Parser;
 {% endif -%}
 use color_eyre::Report;
