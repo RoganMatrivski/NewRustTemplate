@@ -17,9 +17,9 @@ clap = { version = "^4.5", features = ["derive"] }
 {%- endif %}
 color-eyre = { version = "0.6", features = ["capture-spantrace"] }
 eyre = { version="0.6" }
-tracing = "0.1.41"
+tracing = "0.1.44"
 tracing-error = "0.2.1"
-tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
+tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
 
 [profile.dev.package.backtrace]
 opt-level = 3
